@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback, useState } from "react";
 import { OfficeScene } from "../pixi/OfficeScene";
 import { useAgentStore } from "../hooks/useAgentStore";
 import { CANVAS_WIDTH, CANVAS_HEIGHT } from "../utils/constants";
+import type { AgentState } from "../types/agent";
 
 // React StrictMode in dev mounts/unmounts effects twice; queue scene init to avoid
 // concurrent Pixi app.init() calls against the same canvas.
@@ -14,7 +15,7 @@ export function OfficeCanvas() {
   const [canvasSize, setCanvasSize] = useState({ w: CANVAS_WIDTH, h: CANVAS_HEIGHT });
   const [ready, setReady] = useState(false);
   const agents = useAgentStore((s) => s.agents);
-  const prevAgentsRef = useRef(agents);
+  const prevAgentsRef = useRef<Record<string, AgentState>>({});
 
   // Initialize PixiJS scene (properly awaited)
   useEffect(() => {
@@ -143,4 +144,3 @@ export function OfficeCanvas() {
     </div>
   );
 }
-

@@ -1,8 +1,10 @@
 import { OfficeCanvas } from "./components/OfficeCanvas";
 import { StatusPanel } from "./components/StatusPanel";
+import { useOceanLeader } from "./hooks/useOceanLeader";
 import { useWebSocket } from "./hooks/useWebSocket";
 
 function App() {
+  useOceanLeader();
   // Connect to WebSocket
   useWebSocket();
 

@@ -105,10 +105,8 @@ export class AgentCharacter {
 
       case "thinking":
         this.animState = "thinking";
-        this.setWalkPath(
-          this.deskGridX + Math.floor(Math.random() * 4) - 2,
-          this.deskGridY + Math.floor(Math.random() * 3)
-        );
+        this.setTaskText(currentTask);
+        this.setThinkingPath();
         break;
 
       case "sleeping":
@@ -124,6 +122,13 @@ export class AgentCharacter {
   private setWalkPath(toX: number, toY: number) {
     this.targetGridX = Math.max(2, Math.min(toX, 27));
     this.targetGridY = Math.max(3, Math.min(toY, 17));
+  }
+
+  private setThinkingPath() {
+    this.setWalkPath(
+      this.deskGridX + Math.floor(Math.random() * 5) - 2,
+      this.deskGridY + Math.floor(Math.random() * 4) - 1
+    );
   }
 
   private setTaskText(task: string | null) {
@@ -243,6 +248,8 @@ export class AgentCharacter {
       if (this.animState === "walking") {
         this.animState = "working";
         this.updateVisuals();
+      } else if (this.animState === "thinking") {
+        this.setThinkingPath();
       }
     } else {
       const speed = 0.8 * delta;
