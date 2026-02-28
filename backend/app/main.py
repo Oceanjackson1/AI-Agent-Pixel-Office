@@ -16,7 +16,7 @@ ws_manager = WebSocketManager()
 monitor = ProcessMonitor(registry, ws_manager)
 mock_sim = MockSimulator(registry, ws_manager)
 
-USE_MOCK = os.environ.get("MOCK", "1") == "1"
+USE_MOCK = os.environ.get("MOCK", "0") == "1"
 
 
 @asynccontextmanager
