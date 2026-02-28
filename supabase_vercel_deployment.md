@@ -20,49 +20,202 @@
 ### 第一阶段：配置 Supabase
 1. **创建项目**: 登录 Supabase (supabase.com)，创建一个新项目。
 2. **建表与开启 Realtime (核心步骤)**:
-   进入 Supabase 左侧导航栏的 **SQL Editor**，粘贴并运行以下完整的 SQL 脚本。这段脚本会自动为你建表、设置 RLS（行级安全策略）以允许匿名访问，并最重要的是——**为这张表开启 Realtime 广播功能**，完全复刻原先 WebSocket 的能力：
+   进入 Supabase 左侧导航栏的 **SQL Editor**，粘贴并运行仓库里的 [`supabase/init.sql`](./supabase/init.sql)。
+   这份脚本已经按当前代码对齐，补上了前端会读取的 `desk_position` 字段，并会默认插入 `ocean-lead-01` 这位常驻 Leader。
+   如果你想直接从文档复制，也可以执行下面这份完整 SQL：
 
    ```sql
-   -- 1. 创建 agents 状态监控表
-   CREATE TABLE agents (
-     id TEXT PRIMARY KEY, -- Agent 的唯一标识 (对应之前的 agent_id)
-     status TEXT NOT NULL, -- Enum: working, sleeping, idle, thinking
-     current_task TEXT,
-     progress NUMERIC,
-     name TEXT,
-     role TEXT,
-     role_label_zh TEXT,
-     character_sprite TEXT,
-     updated_at TIMESTAMPTZ DEFAULT NOW() -- 每次心跳更新时间
+   create table if not exists public.agents (
+     id text primary key,
+     name text,
+     role text not null default 'backend',
+     role_label_zh text not null default '员工',
+     status text not null default 'sleeping',
+     current_task text,
+     progress numeric,
+     desk_position integer[],
+     character_sprite text not null default 'char-blue',
+     updated_at timestamptz not null default timezone('utc', now())
    );
 
-   -- 2. 启用行级安全防御 (RLS)
-   ALTER TABLE agents ENABLE ROW LEVEL SECURITY;
+   alter table public.agents add column if not exists name text;
+   alter table public.agents add column if not exists role text;
+   alter table public.agents add column if not exists role_label_zh text;
+   alter table public.agents add column if not exists status text;
+   alter table public.agents add column if not exists current_task text;
+   alter table public.agents add column if not exists progress numeric;
+   alter table public.agents add column if not exists desk_position integer[];
+   alter table public.agents add column if not exists character_sprite text;
+   alter table public.agents add column if not exists updated_at timestamptz;
 
-   -- 3. 创建访问策略：允许所有匿名端点 (我们的 Vercel 前端和任何脚本客户端) 读写心跳
-   -- 注意：生产环境中，如果是机密数据，这里应改为认证写入。大屏展示可以放开。
-   CREATE POLICY "Enable read access for all users" ON agents FOR SELECT USING (true);
-   CREATE POLICY "Enable insert for all users" ON agents FOR INSERT WITH CHECK (true);
-   CREATE POLICY "Enable update for all users" ON agents FOR UPDATE USING (true);
+   update public.agents
+   set
+     role = coalesce(role, 'backend'),
+     role_label_zh = coalesce(role_label_zh, '员工'),
+     status = coalesce(status, 'sleeping'),
+     character_sprite = coalesce(character_sprite, 'char-blue'),
+     updated_at = coalesce(updated_at, timezone('utc', now()));
 
-   -- 4. 自动更新 updated_at 的触发器函数
-   CREATE OR REPLACE FUNCTION set_updated_at()
-   RETURNS TRIGGER AS $$
-   BEGIN
-     NEW.updated_at = NOW();
-     RETURN NEW;
-   END;
-   $$ LANGUAGE plpgsql;
+   alter table public.agents alter column role set default 'backend';
+   alter table public.agents alter column role_label_zh set default '员工';
+   alter table public.agents alter column status set default 'sleeping';
+   alter table public.agents alter column character_sprite set default 'char-blue';
+   alter table public.agents alter column updated_at set default timezone('utc', now());
 
-   -- 5. 绑定触发器到 agents 表
-   CREATE TRIGGER set_agents_updated_at
-   BEFORE UPDATE ON agents
-   FOR EACH ROW
-   EXECUTE FUNCTION set_updated_at();
+   alter table public.agents alter column role set not null;
+   alter table public.agents alter column role_label_zh set not null;
+   alter table public.agents alter column status set not null;
+   alter table public.agents alter column character_sprite set not null;
+   alter table public.agents alter column updated_at set not null;
 
-   -- 6. 【最重要】为 agents 表开启 Supabase Realtime！
-   -- 这一步等价于我们之前的 FastAPI WebSocket 广播
-   ALTER PUBLICATION supabase_realtime ADD TABLE agents;
+   do $$
+   begin
+     if not exists (
+       select 1 from pg_constraint where conname = 'agents_role_check'
+     ) then
+       alter table public.agents
+         add constraint agents_role_check
+         check (role in ('frontend', 'backend', 'design', 'product', 'qa', 'devops', 'data', 'lead'));
+     end if;
+
+     if not exists (
+       select 1 from pg_constraint where conname = 'agents_status_check'
+     ) then
+       alter table public.agents
+         add constraint agents_status_check
+         check (status in ('working', 'idle', 'thinking', 'sleeping', 'offline'));
+     end if;
+
+     if not exists (
+       select 1 from pg_constraint where conname = 'agents_progress_check'
+     ) then
+       alter table public.agents
+         add constraint agents_progress_check
+         check (progress is null or (progress >= 0 and progress <= 1));
+     end if;
+
+     if not exists (
+       select 1 from pg_constraint where conname = 'agents_desk_position_check'
+     ) then
+       alter table public.agents
+         add constraint agents_desk_position_check
+         check (
+           desk_position is null
+           or (
+             array_length(desk_position, 1) = 2
+             and desk_position[1] is not null
+             and desk_position[2] is not null
+           )
+         );
+     end if;
+   end $$;
+
+   create or replace function public.set_agents_updated_at()
+   returns trigger
+   language plpgsql
+   as $$
+   begin
+     new.updated_at = timezone('utc', now());
+     return new;
+   end;
+   $$;
+
+   drop trigger if exists set_agents_updated_at on public.agents;
+   create trigger set_agents_updated_at
+   before update on public.agents
+   for each row
+   execute function public.set_agents_updated_at();
+
+   alter table public.agents enable row level security;
+
+   do $$
+   begin
+     if not exists (
+       select 1
+       from pg_policies
+       where schemaname = 'public'
+         and tablename = 'agents'
+         and policyname = 'agents_select_all'
+     ) then
+       create policy agents_select_all
+         on public.agents
+         for select
+         using (true);
+     end if;
+
+     if not exists (
+       select 1
+       from pg_policies
+       where schemaname = 'public'
+         and tablename = 'agents'
+         and policyname = 'agents_insert_all'
+     ) then
+       create policy agents_insert_all
+         on public.agents
+         for insert
+         with check (true);
+     end if;
+
+     if not exists (
+       select 1
+       from pg_policies
+       where schemaname = 'public'
+         and tablename = 'agents'
+         and policyname = 'agents_update_all'
+     ) then
+       create policy agents_update_all
+         on public.agents
+         for update
+         using (true)
+         with check (true);
+     end if;
+   end $$;
+
+   grant usage on schema public to anon, authenticated, service_role;
+   grant select, insert, update on public.agents to anon, authenticated, service_role;
+
+   do $$
+   begin
+     if not exists (
+       select 1
+       from pg_publication_tables
+       where pubname = 'supabase_realtime'
+         and schemaname = 'public'
+         and tablename = 'agents'
+     ) then
+       alter publication supabase_realtime add table public.agents;
+     end if;
+   end $$;
+
+   insert into public.agents (
+     id,
+     name,
+     role,
+     role_label_zh,
+     status,
+     current_task,
+     progress,
+     desk_position,
+     character_sprite
+   )
+   values (
+     'ocean-lead-01',
+     'Ocean',
+     'lead',
+     'Boss',
+     'sleeping',
+     null,
+     null,
+     array[23, 2],
+     'char-lead'
+   )
+   on conflict (id) do update
+   set
+     name = excluded.name,
+     role = excluded.role,
+     role_label_zh = excluded.role_label_zh,
+     desk_position = excluded.desk_position,
+     character_sprite = excluded.character_sprite;
    ```
 
 3. **获取密钥**: 到 Project Settings -> API 中，拿到你的 `URL` 和 `anon` public 密钥。
