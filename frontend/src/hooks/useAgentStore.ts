@@ -10,6 +10,7 @@ interface AgentStore {
     currentTask: string | null
   ) => void;
   updateAgentProgress: (agentId: string, progress: number) => void;
+  upsertAgent: (agent: AgentState) => void;
   getAgentList: () => AgentState[];
 }
 
@@ -54,5 +55,18 @@ export const useAgentStore = create<AgentStore>((set, get) => ({
     });
   },
 
+  upsertAgent: (agent) => {
+    set((state) => ({
+      agents: {
+        ...state.agents,
+        [agent.id]: {
+          ...(state.agents[agent.id] || {}),
+          ...agent,
+        },
+      },
+    }));
+  },
+
   getAgentList: () => Object.values(get().agents),
 }));
+
