@@ -1,36 +1,90 @@
 # 🏢 AI-Agent-Pixel-Office
 
-AI-Agent-Pixel-Office is a real-time, 2D pixel-art style virtual office dashboard designed to monitor and visualize a fleet of AI Agents. Think of it as a dynamic "Habbo Hotel" or "Pokemon-style" open office where each local or remote AI agent gets a virtual desk as long as it's running.
+> **像素风 AI 牛马监工大屏** — 实时可视化你所有 AI Agent 的工作状态
 
-## ✨ Features
+一个基于 **React + Pixi.js + FastAPI** 的 2D 像素风虚拟办公室。
+无论你的 AI Agent 跑在本地还是云端，只要它发送一次心跳，就会自动获得一张工位、一个像素小人，以及头顶冒出的实时任务气泡。
 
-- **Dynamic Infinite Scaling**: No hardcoded 6-agent limit. External agents seamlessly pop into the office environment the moment they send a heartbeat. Desks are dynamically allocated on an infinite grid sequence.
-- **Apple-Style UX/UI Design**: Frosted glass (blur) sidebars, bright and ultra-clean white macOS-like interfaces, and high-quality Apple system typography (`-apple-system`).
-- **Real-Time Visualization (Pixi.js)**: Characters feature idle, working, walking, and sleeping animations dynamically matched to their telemetry status. Status bubbles pop up over their heads to reflect their current sub-tasks.
-- **Custom Identities via Payload**: Cloud agents can bring their own names, roles (e.g., Frontend, QA, Product), and custom pixel outfits just by injecting data into their HTTP payload.
-
-## 📦 Tech Stack
-
-- **Frontend**: React, Vite, Zustand (State Management), Pixi.js (2D WebGL Engine).
-- **Backend**: FastAPI (Python), Uvicorn, WebSockets (for real-time frontend syncing).
-- **Communication**: REST API (for incoming agent heartbeats) -> WebSockets (for broadcasting state out).
+![效果预览](https://img.shields.io/badge/style-Apple%20Design-blue?style=flat-square)
+![Agent数量](https://img.shields.io/badge/agents-无上限-green?style=flat-square)
+![实时同步](https://img.shields.io/badge/sync-WebSocket-orange?style=flat-square)
 
 ---
 
-## 🚀 Getting Started
+## ✨ 核心特性
 
-### 1. Start the Backend server
+| 特性 | 描述 |
+|------|------|
+| 🚀 **无限扩容** | 没有硬编码的 Agent 数量上限。新 Agent 发送心跳后自动分配工位，即时出现在 2D 办公室中 |
+| 🍎 **Apple 风格 UI** | 毛玻璃侧边栏、系统级字体、圆角卡片、柔和阴影 — 整套苹果设计语言 |
+| 🎮 **Pixi.js 实时渲染** | 像素小人拥有工作、思考、休眠等动态状态动画，头顶气泡展示当前任务 |
+| 🎨 **自定义身份** | Agent 可通过心跳 Payload 自报姓名、岗位角色、像素皮肤样式 |
+| 📊 **状态面板** | 右侧侧边栏实时展示所有 Agent 的状态、任务、进度条，支持滚动浏览 |
+| 🔌 **即插即用** | 任何能发 HTTP 请求的程序都能接入 — Python 脚本、LangChain Agent、Node.js 服务等 |
+
+---
+
+## 🏗️ 技术架构
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    浏览器 (前端大屏)                       │
+│  React + Pixi.js + Zustand                              │
+│  ┌──────────────┐  ┌──────────────────┐                 │
+│  │ 2D 像素办公室  │  │ 毛玻璃状态面板     │                 │
+│  │ (OfficeCanvas) │  │ (StatusPanel)    │                 │
+│  └──────┬───────┘  └────────┬─────────┘                 │
+│         └────────┬──────────┘                            │
+│                  │ WebSocket (实时状态推送)                │
+└──────────────────┼──────────────────────────────────────┘
+                   │
+┌──────────────────┼──────────────────────────────────────┐
+│            FastAPI 后端 (Python)                         │
+│  ┌───────────────┼──────────────┐                       │
+│  │         WebSocket 管理器       │                       │
+│  │         Agent 注册中心         │                       │
+│  │         Mock 模拟器           │                       │
+│  └───────────────┬──────────────┘                       │
+│                  │ REST API (心跳接收)                    │
+└──────────────────┼──────────────────────────────────────┘
+                   │
+    ┌──────────────┼──────────────┐
+    │    本地/云端 AI Agents       │
+    │  POST /heartbeat 上报状态    │
+    └─────────────────────────────┘
+```
+
+### 技术栈
+
+| 层级 | 技术 |
+|------|------|
+| **前端** | React 18, TypeScript, Vite, Pixi.js v8, Zustand |
+| **后端** | Python 3.11+, FastAPI, Uvicorn, Pydantic |
+| **通信** | REST API (Agent → 后端) + WebSocket (后端 → 前端) |
+
+---
+
+## 🚀 快速开始
+
+### 前置条件
+
+- Python 3.11+
+- Node.js 18+
+- npm 或 pnpm
+
+### 1️⃣ 启动后端
 
 ```bash
 cd backend
 python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt # Make sure fastapi, uvicorn, pydantic are available
+source .venv/bin/activate     # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
 python3 -m uvicorn app.main:app --reload --port 8000
 ```
-*(The backend needs to run on `localhost:8000` as the frontend listens to `ws://localhost:8000/ws/office` by default)*
 
-### 2. Start the Frontend dashboard
+后端启动后会在 `http://localhost:8000` 上运行。如果设置了 `MOCK_MODE=true`（默认启用），会自动模拟 6 个 Agent 的活动。
+
+### 2️⃣ 启动前端
 
 ```bash
 cd frontend
@@ -38,40 +92,184 @@ npm install
 npm run dev
 ```
 
-Visit the displayed local URL (usually `http://localhost:5173`) in your browser. You will see an empty pixel office with a glassmorphism right sidebar.
+打开浏览器访问 `http://localhost:5173`，你会看到像素风的 2D 办公室和右侧的毛玻璃状态面板。
 
-### 3. Inject "Workers" (External Agents)
+### 3️⃣ 模拟大量牛马涌入
 
-You can run the built-in testing script to simulate a dozen cloud workers entering the office simultaneously:
 ```bash
 cd backend
 python3 test_dynamic.py
 ```
 
-Alternatively, integrate the heartbeat system straight into your own AI processes (via HTTP POST to `http://localhost:8000/api/agents/{agent_id}/heartbeat`).
+这个脚本会同时注册多个随机 Agent（随机名字、随机岗位），你可以在前端看到小人一个接一个地出现在办公室里。
 
 ---
 
-## 📝 Integration API for External Agents
+## 📡 外部 Agent 接入 API
 
-If you want an external python script, a LangChain agent, or any bot to show up in the Pixel Office, send a POST request inside your agent loop:
+### 心跳接口
+
+```
+POST http://localhost:8000/api/agents/{agent_id}/heartbeat
+Content-Type: application/json
+```
+
+### 请求体 (JSON)
+
+```json
+{
+  "status": "working",
+  "current_task": "正在爬取网页数据",
+  "progress": 0.65,
+  "name": "云端爬虫一号",
+  "role": "backend",
+  "role_label_zh": "爬虫",
+  "character_sprite": "char-blue"
+}
+```
+
+#### 参数说明
+
+| 参数 | 类型 | 必须 | 说明 |
+|------|------|------|------|
+| `status` | string | ✅ | 当前状态枚举：`working` / `idle` / `thinking` / `sleeping` |
+| `current_task` | string | ❌ | 当前具体任务描述（会显示为头顶气泡） |
+| `progress` | float | ❌ | 进度条 0.0 ~ 1.0 |
+| `name` | string | ❌ | Agent 显示名称（首次注册时建议填写） |
+| `role` | string | ❌ | 岗位枚举：`frontend` / `backend` / `design` / `product` / `qa` / `devops` / `data` / `lead` |
+| `role_label_zh` | string | ❌ | 自定义中文头衔标签 |
+| `character_sprite` | string | ❌ | 像素小人颜色：`char-red` / `char-blue` / `char-green` / `char-yellow` / `char-orange` / `char-lead` |
+
+### Python 接入示例
 
 ```python
 import requests
+import time
+import threading
 
-payload = {
-    "status": "working",                # ENUM: "working", "idle", "sleeping", "thinking"
-    "current_task": "Designing a logo", # Displays bubble over head
-    "progress": 0.45,                   # Optional: Progress bar (0 ~ 1.0)
-    "name": "Cloud Designer",           # Set a custom display name
-    "role": "design",                   # Role ENUM controls avatar color
-    "role_label_zh": "设计"             # Role badge label
-}
+AGENT_ID = "my-agent-001"
+API_URL = f"http://localhost:8000/api/agents/{AGENT_ID}/heartbeat"
 
-requests.post("http://localhost:8000/api/agents/designer-bot-01/heartbeat", json=payload)
+def send_heartbeat(status, task=None, progress=None):
+    """发送一次心跳到 Pixel Office 大屏"""
+    payload = {
+        "status": status,
+        "name": "我的AI助手",
+        "role": "backend",
+        "role_label_zh": "助手",
+    }
+    if task:
+        payload["current_task"] = task
+    if progress is not None:
+        payload["progress"] = progress
+    try:
+        requests.post(API_URL, json=payload, timeout=2)
+    except Exception:
+        pass  # 大屏未启动时静默忽略
+
+# 后台心跳线程（推荐每 2~3 秒发送一次）
+def start_heartbeat_loop():
+    def loop():
+        while True:
+            send_heartbeat("working", "处理用户请求中")
+            time.sleep(2)
+    threading.Thread(target=loop, daemon=True).start()
 ```
 
-As long as your agent continues to send pulses, they'll stay active in the office. Switch `status` to `sleeping` when the job is done, and see their avatar lay its head down!
+---
+
+## 📁 项目结构
+
+```
+AI-Agent-Pixel-Office/
+├── backend/
+│   ├── app/
+│   │   ├── main.py              # FastAPI 入口 & CORS/WebSocket 路由
+│   │   ├── models.py            # Pydantic 数据模型 (AgentState, HeartbeatPayload 等)
+│   │   ├── agent_registry.py    # Agent 注册中心 & 动态工位分配
+│   │   ├── ws_manager.py        # WebSocket 连接管理器
+│   │   ├── mock_simulator.py    # Mock 模式下的 Agent 活动模拟
+│   │   ├── process_monitor.py   # 进程监控工具
+│   │   ├── config.py            # 配置文件
+│   │   └── routers/
+│   │       └── agents.py        # Agent REST API 路由
+│   ├── agent_sdk/
+│   │   └── heartbeat.py         # Python SDK 心跳工具
+│   ├── test_dynamic.py          # 批量动态注册测试脚本
+│   └── requirements.txt
+├── frontend/
+│   ├── src/
+│   │   ├── App.tsx              # 主应用组件 (Flex 布局)
+│   │   ├── index.css            # 全局样式 (Apple 字体/滚动条)
+│   │   ├── components/
+│   │   │   ├── OfficeCanvas.tsx  # 2D 办公室画布 (自适应缩放)
+│   │   │   └── StatusPanel.tsx   # 毛玻璃侧边栏面板
+│   │   ├── pixi/
+│   │   │   ├── OfficeScene.ts   # Pixi.js 主场景管理
+│   │   │   ├── OfficeMap.ts     # 2D 地图、地板、墙壁渲染
+│   │   │   ├── AgentCharacter.ts # 像素小人动画状态机
+│   │   │   └── CharacterRenderer.ts # 角色标签、气泡绘制
+│   │   ├── hooks/
+│   │   │   ├── useWebSocket.ts  # WebSocket 连接管理
+│   │   │   └── useAgentStore.ts # Zustand 全局状态仓库
+│   │   ├── types/               # TypeScript 类型定义
+│   │   └── utils/
+│   │       └── constants.ts     # 颜色常量、画布尺寸等
+│   ├── index.html
+│   ├── vite.config.ts
+│   └── package.json
+├── supabase_vercel_deployment.md # Vercel + Supabase 部署指南
+├── Makefile
+└── README.md
+```
 
 ---
-*Created as an experiment in visual agent observability.*
+
+## ☁️ 云端部署 (Vercel + Supabase)
+
+如果你希望将这个项目部署到云端以便远程访问，推荐使用 **Vercel + Supabase** 的 Serverless 方案。详细步骤和完整的 SQL 初始化脚本请参考：
+
+👉 [**supabase_vercel_deployment.md**](./supabase_vercel_deployment.md)
+
+**架构要点：**
+- 前端托管在 Vercel（全球 CDN 加速）
+- 用 Supabase Realtime 替代 FastAPI WebSocket
+- Agent 心跳直接写入 Supabase Postgres，实时广播到前端
+- 完全无需自建服务器
+
+---
+
+## 🎨 UI/UX 设计理念
+
+本项目采用 **Apple Design Language** 设计风格：
+
+- **毛玻璃效果（Glassmorphism）**：侧边栏使用 `backdrop-filter: blur(20px)` 实现半透明模糊
+- **系统字体**：使用 `-apple-system, BlinkMacSystemFont, "SF Pro Text"` 原生字体栈
+- **柔和配色**：背景 `#f5f5f7`、文字 `#1d1d1f`、辅助灰 `#86868b`
+- **圆角 + 阴影**：所有卡片和画布使用 `border-radius: 16px` + 柔和投影
+- **自适应缩放**：画布根据容器尺寸自动计算最优显示尺寸，保持像素锐利
+
+---
+
+## 🤝 协作与贡献
+
+欢迎提交 Issue 和 Pull Request！
+
+如果你有以下方面的想法，非常欢迎贡献：
+- 🎭 更多像素小人皮肤和动画
+- 🏗️ 更丰富的办公室家具和场景
+- 📱 移动端适配
+- 🔐 Agent 认证机制
+- 📈 历史数据分析面板
+
+---
+
+## 📄 License
+
+MIT License
+
+---
+
+<p align="center">
+  <b>让你的 AI 牛马大军，有一个看得见的家 🏠</b>
+</p>
