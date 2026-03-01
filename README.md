@@ -143,37 +143,41 @@ Content-Type: application/json
 ### Python 接入示例
 
 ```python
-import requests
-import time
-import threading
+from agent_sdk import AgentHeartbeat
 
-AGENT_ID = "my-agent-001"
-API_URL = f"http://localhost:8000/api/agents/{AGENT_ID}/heartbeat"
+heartbeat = AgentHeartbeat(
+    "product-agent-01",
+    server_url="http://localhost:8000",
+    name="Mika",
+    role="product",
+    role_label_zh="产品",
+    character_sprite="char-yellow",
+)
 
-def send_heartbeat(status, task=None, progress=None):
-    """发送一次心跳到 Pixel Office 大屏"""
-    payload = {
-        "status": status,
-        "name": "我的AI助手",
-        "role": "backend",
-        "role_label_zh": "助手",
-    }
-    if task:
-        payload["current_task"] = task
-    if progress is not None:
-        payload["progress"] = progress
-    try:
-        requests.post(API_URL, json=payload, timeout=2)
-    except Exception:
-        pass  # 大屏未启动时静默忽略
+def main():
+    heartbeat.report("working", current_task="梳理需求", progress=0.2)
+    # 你的业务逻辑写在这里
+    heartbeat.report("idle", current_task="等待新的输入")
 
-# 后台心跳线程（推荐每 2~3 秒发送一次）
-def start_heartbeat_loop():
-    def loop():
-        while True:
-            send_heartbeat("working", "处理用户请求中")
-            time.sleep(2)
-    threading.Thread(target=loop, daemon=True).start()
+if __name__ == "__main__":
+    heartbeat.run(
+        main,
+        startup_task="产品进程启动中",
+        shutdown_task="产品进程已停止",
+        exception_task="产品进程异常退出",
+    )
+```
+
+这样接入后：
+- 进程启动时会自动上报 `thinking / 产品进程启动中`
+- 进程运行中可以随时调用 `heartbeat.report(...)`
+- 进程异常退出时会自动上报 `offline`
+- 进程正常停止或收到 `SIGINT` / `SIGTERM` 时会自动上报 `sleeping`
+
+仓库里也提供了一个可直接运行的产品进程示例：
+
+```bash
+make product-agent
 ```
 
 ---

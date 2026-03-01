@@ -1,4 +1,4 @@
-.PHONY: dev dev-backend dev-frontend install
+.PHONY: dev dev-backend dev-frontend install product-agent
 
 # Install all dependencies
 install:
@@ -27,3 +27,7 @@ prod-backend:
 # Build frontend for production
 build:
 	cd frontend && npm run build
+
+# Start a real product agent process that auto-reports heartbeat lifecycle
+product-agent:
+	cd backend && python3 product_agent.py
