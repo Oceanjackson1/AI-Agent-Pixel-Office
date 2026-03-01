@@ -21,15 +21,27 @@ class AgentRegistry:
                 character_sprite=cfg.character_sprite,
             )
 
+    _DESK_GRID: list[tuple[int, int]] = [
+        # Row 1 (y=5): 4 desks
+        (3, 5), (8, 5), (13, 5), (18, 5),
+        # Row 2 (y=12): 4 desks
+        (3, 12), (8, 12), (13, 12), (18, 12),
+        # Row 3 (y=19): 4 desks
+        (3, 19), (8, 19), (13, 19), (18, 19),
+        # Row 4 (y=26): 4 desks
+        (3, 26), (8, 26), (13, 26), (18, 26),
+        # Row 5 (y=33): 4 desks
+        (3, 33), (8, 33), (13, 33), (18, 33),
+    ]
+
     def _get_next_desk_position(self) -> tuple[int, int]:
-        # Simple logical grid allocation for dynamic unconfigured agents
-        cols = [2, 5, 8, 11, 14, 17, 20, 23, 26]
-        rows = [2, 5, 8, 11, 14]
-        
         idx = len(self._agents)
-        col = cols[idx % len(cols)]
-        row = rows[(idx // len(cols)) % len(rows)]
-        return (col, row)
+        grid = self._DESK_GRID
+        if idx < len(grid):
+            return grid[idx]
+        # Overflow: share desks with +1 x-offset (second seat)
+        base = grid[(idx - len(grid)) % len(grid)]
+        return (base[0] + 1, base[1])
 
     def get(self, agent_id: str) -> Optional[AgentState]:
         return self._agents.get(agent_id)

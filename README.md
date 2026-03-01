@@ -18,8 +18,10 @@
 | 🚀 **无限扩容** | 没有硬编码的 Agent 数量上限。新 Agent 发送心跳后自动分配工位，即时出现在 2D 办公室中 |
 | 🍎 **Apple 风格 UI** | 毛玻璃侧边栏、系统级字体、圆角卡片、柔和阴影 — 整套苹果设计语言 |
 | 🎮 **Pixi.js 实时渲染** | 像素小人拥有工作、思考、休眠等动态状态动画，头顶气泡展示当前任务 |
+| 🏃 **Agent 自主走动** | 工作中的 Agent 会随机起身去咖啡机、白板、书架或找同事"交流"，办公室充满活力 |
+| 🗺️ **大地图 + 摄像机** | 办公室扩展为 30×40 格双层大地图，支持鼠标滚轮/拖拽平移，点击右侧 Agent 卡片自动定位 |
 | 🎨 **自定义身份** | Agent 可通过心跳 Payload 自报姓名、岗位角色、像素皮肤样式 |
-| 📊 **状态面板** | 右侧侧边栏实时展示所有 Agent 的状态、任务、进度条，支持滚动浏览 |
+| 📊 **状态面板** | 右侧侧边栏实时展示所有 Agent 的状态、任务、进度条，点击卡片跳转到对应小人 |
 | 🔌 **即插即用** | 任何能发 HTTP 请求的程序都能接入 — Python 脚本、LangChain Agent、Node.js 服务等 |
 
 ---
@@ -58,7 +60,7 @@
 
 | 层级 | 技术 |
 |------|------|
-| **前端** | React 18, TypeScript, Vite, Pixi.js v8, Zustand |
+| **前端** | React 19, TypeScript, Vite, Pixi.js v8, Zustand |
 | **后端** | Python 3.11+, FastAPI, Uvicorn, Pydantic |
 | **通信** | REST API (Agent → 后端) + WebSocket (后端 → 前端) |
 
@@ -209,13 +211,14 @@ AI-Agent-Pixel-Office/
 │   │   │   ├── OfficeCanvas.tsx  # 2D 办公室画布 (自适应缩放)
 │   │   │   └── StatusPanel.tsx   # 毛玻璃侧边栏面板
 │   │   ├── pixi/
-│   │   │   ├── OfficeScene.ts   # Pixi.js 主场景管理
-│   │   │   ├── OfficeMap.ts     # 2D 地图、地板、墙壁渲染
-│   │   │   ├── AgentCharacter.ts # 像素小人动画状态机
+│   │   │   ├── OfficeScene.ts   # Pixi.js 主场景 + 摄像机平移 + 气泡防重叠
+│   │   │   ├── OfficeMap.ts     # 30×40 大地图、家具、兴趣点 (POI) 渲染
+│   │   │   ├── AgentCharacter.ts # 像素小人动画状态机 + 走动子状态机
 │   │   │   └── CharacterRenderer.ts # 角色标签、气泡绘制
 │   │   ├── hooks/
-│   │   │   ├── useWebSocket.ts  # WebSocket 连接管理
-│   │   │   └── useAgentStore.ts # Zustand 全局状态仓库
+│   │   │   ├── useWebSocket.ts  # WebSocket/Supabase Realtime 连接管理
+│   │   │   ├── useAgentStore.ts # Zustand 全局状态仓库 + 摄像机桥接
+│   │   │   └── useOceanLeader.ts # Ocean Boss 巡逻任务轮换
 │   │   ├── types/               # TypeScript 类型定义
 │   │   └── utils/
 │   │       └── constants.ts     # 颜色常量、画布尺寸等
@@ -290,13 +293,36 @@ frontend/.env.example
 
 ---
 
+## 🏃 办公室动态系统
+
+### 大地图与摄像机
+
+办公室从 30×20 扩展到 **30×40 格**（480×640 像素），包含 5 行工位（最多 20 张桌子），以及咖啡机、会议桌、白板、书架等兴趣点家具。
+
+- **鼠标滚轮**：上下滚动浏览办公室
+- **拖拽平移**：按住鼠标拖拽画布
+- **点击定位**：点击右侧 Agent 卡片，摄像机平滑滚动到该 Agent 位置
+
+### Agent 走动行为
+
+工作中的 Agent 不会一直坐在工位上 — 它们会自主起身走动：
+
+- **去兴趣点**（60%）：随机走向咖啡机、白板、书架、会议桌等地方，停留 3-8 秒后返回
+- **互访同事**（40%）：走到其他正在工作的 Agent 工位旁边"交流"几秒再回去
+- 每 15-30 秒有 40% 概率触发一次走动，初始时间错开避免集体行动
+- 走动时隐藏任务气泡，回到座位后自动恢复
+- 相邻 Agent 的任务气泡会自动垂直错开，避免重叠
+
+---
+
 ## 🤝 协作与贡献
 
 欢迎提交 Issue 和 Pull Request！
 
 如果你有以下方面的想法，非常欢迎贡献：
 - 🎭 更多像素小人皮肤和动画
-- 🏗️ 更丰富的办公室家具和场景
+- 🏗️ 更丰富的办公室家具和互动场景
+- 🗺️ 多楼层/缩放支持
 - 📱 移动端适配
 - 🔐 Agent 认证机制
 - 📈 历史数据分析面板

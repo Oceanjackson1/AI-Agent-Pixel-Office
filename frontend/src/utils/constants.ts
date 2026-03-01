@@ -1,9 +1,11 @@
 export const TILE_SIZE = 16;
 export const SCALE = 3;
 export const MAP_COLS = 30;
-export const MAP_ROWS = 20;
+export const MAP_ROWS = 40;
 export const CANVAS_WIDTH = MAP_COLS * TILE_SIZE;
-export const CANVAS_HEIGHT = MAP_ROWS * TILE_SIZE;
+export const VIEWPORT_HEIGHT = 320; // Visible area height (same as old canvas)
+export const WORLD_HEIGHT = MAP_ROWS * TILE_SIZE; // 640px full map height
+export const CANVAS_HEIGHT = VIEWPORT_HEIGHT;
 export const CHAR_SIZE = 16;
 
 // Colors - PICO-8 inspired palette
@@ -54,6 +56,16 @@ export const COLORS = {
   // Carpet/rug area
   CARPET: 0x4466aa,
   CARPET_DARK: 0x385590,
+
+  // Coffee machine
+  COFFEE_BODY: 0x666677,
+  COFFEE_TOP: 0x555566,
+  COFFEE_CUP: 0xeeeeee,
+  COFFEE_LIQUID: 0x663311,
+
+  // Meeting table
+  MEETING_TABLE: 0xb8956a,
+  MEETING_TABLE_SIDE: 0x8a6840,
 
   // UI
   LABEL_BG: 0x0066cc,

@@ -16,6 +16,9 @@ interface AgentStore {
   updateAgentProgress: (agentId: string, progress: number) => void;
   upsertAgent: (agent: AgentState) => void;
   getAgentList: () => AgentState[];
+  // Camera scroll bridge: set by OfficeCanvas, called by StatusPanel
+  scrollToAgent: ((agentId: string) => void) | null;
+  setScrollToAgent: (fn: ((agentId: string) => void) | null) => void;
 }
 
 function normalizeOceanLeader(agent?: Partial<AgentState>): AgentState {
@@ -114,4 +117,7 @@ export const useAgentStore = create<AgentStore>((set, get) => ({
   },
 
   getAgentList: () => Object.values(get().agents),
+
+  scrollToAgent: null,
+  setScrollToAgent: (fn) => set({ scrollToAgent: fn }),
 }));

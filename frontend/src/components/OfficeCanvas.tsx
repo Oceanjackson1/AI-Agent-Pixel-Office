@@ -36,6 +36,12 @@ export function OfficeCanvas() {
           scene.destroy();
           return;
         }
+
+        // Register scrollToAgent bridge for StatusPanel
+        useAgentStore.getState().setScrollToAgent((agentId: string) => {
+          scene?.scrollToAgent(agentId);
+        });
+
         setReady(true);
       });
 
@@ -49,6 +55,7 @@ export function OfficeCanvas() {
     return () => {
       destroyed = true;
       setReady(false);
+      useAgentStore.getState().setScrollToAgent(null);
       scene?.destroy();
       sceneRef.current = null;
     };

@@ -11,17 +11,24 @@ const WS_URL =
 // Desk position allocation (mirrors backend logic for Supabase-only mode)
 // ---------------------------------------------------------------------------
 const DESK_POSITIONS: [number, number][] = [
-  [3, 4], [6, 4], [9, 4], [12, 4],
-  [5, 8], [9, 8],
-  [3, 12], [6, 12], [9, 12], [12, 12],
-  [3, 16], [6, 16], [9, 16], [12, 16],
+  // Row 1 (y=5): 4 desks
+  [3, 5], [8, 5], [13, 5], [18, 5],
+  // Row 2 (y=12): 4 desks
+  [3, 12], [8, 12], [13, 12], [18, 12],
+  // Row 3 (y=19): 4 desks
+  [3, 19], [8, 19], [13, 19], [18, 19],
+  // Row 4 (y=26): 4 desks
+  [3, 26], [8, 26], [13, 26], [18, 26],
+  // Row 5 (y=33): 4 desks
+  [3, 33], [8, 33], [13, 33], [18, 33],
 ];
 
 function getDeskPosition(index: number): [number, number] {
   if (index < DESK_POSITIONS.length) return DESK_POSITIONS[index];
-  const col = 3 + ((index - DESK_POSITIONS.length) % 4) * 3;
-  const row = 20 + Math.floor((index - DESK_POSITIONS.length) / 4) * 4;
-  return [col, row];
+  // Overflow: share desks with a +1 x-offset (second seat)
+  const baseIndex = (index - DESK_POSITIONS.length) % DESK_POSITIONS.length;
+  const base = DESK_POSITIONS[baseIndex];
+  return [base[0] + 1, base[1]];
 }
 
 // Default character sprites for auto-generated positions

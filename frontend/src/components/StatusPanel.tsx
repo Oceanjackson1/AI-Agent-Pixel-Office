@@ -19,6 +19,7 @@ const STATUS_LABEL: Record<AgentStatus, string> = {
 
 export function StatusPanel() {
   const agents = useAgentStore((s) => s.agents);
+  const scrollToAgent = useAgentStore((s) => s.scrollToAgent);
   const agentList = Object.values(agents);
 
   if (agentList.length === 0) {
@@ -43,7 +44,11 @@ export function StatusPanel() {
       </div>
       <div style={listStyle}>
         {agentList.map((agent) => (
-          <div key={agent.id} style={agentCardStyle}>
+          <div
+            key={agent.id}
+            style={agentCardStyle}
+            onClick={() => scrollToAgent?.(agent.id)}
+          >
             <div style={agentHeaderStyle}>
               <span>{STATUS_EMOJI[agent.status]}</span>
               <span style={agentNameStyle}>{agent.name}</span>
@@ -139,6 +144,8 @@ const agentCardStyle: React.CSSProperties = {
   display: "flex",
   flexDirection: "column",
   gap: 4,
+  cursor: "pointer",
+  transition: "background 0.15s",
 };
 
 const agentHeaderStyle: React.CSSProperties = {
