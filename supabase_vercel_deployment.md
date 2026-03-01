@@ -219,6 +219,20 @@
    ```
 
 3. **获取密钥**: 到 Project Settings -> API 中，拿到你的 `URL` 和 `anon` public 密钥。
+4. **配置前端环境变量（必须）**:
+   你的 Agent 进程把数据写进 Supabase 后，前端页面还必须显式配置同一个 Supabase 项目，否则页面不会去读取这张表。
+
+   在本地开发时，把下面内容写到 `frontend/.env.local`；如果部署到 Vercel，就去 Vercel 项目的 Environment Variables 配同样的值：
+
+   ```env
+   VITE_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
+   VITE_SUPABASE_PUBLISHABLE_KEY=YOUR_SUPABASE_PUBLISHABLE_KEY
+   ```
+
+   注意：
+   - 这里必须使用 **publishable key**（或兼容的 anon public key）
+   - 不要把 Agent 进程用的 `service_role`、secret key 或你自己的 `HEARTBEAT_API_KEY` 直接暴露给前端
+   - 仓库里已有模板文件：[`frontend/.env.example`](./frontend/.env.example)
 
 ### 第二阶段：重构前端连线 (React)
 由于我们要脱离 FastAPI，前端需做如下修改：
@@ -278,7 +292,24 @@ supabase.realtime.channel("office-room").send(
 3. Vercel 会自动识别出这是一个 Vite 项目。
 4. 在 Environment Variables 中填入:
    - `VITE_SUPABASE_URL` = 你的链接
-   - `VITE_SUPABASE_ANON_KEY` = 你的公钥
+   - `VITE_SUPABASE_PUBLISHABLE_KEY` = 你的 publishable key
 5. 点击 **Deploy**！
+
+### 多 Agent 最佳实践
+
+如果会有多个 Agent 同时往页面上报，建议每个 Agent 至少写入这些字段：
+
+- `id`: 全局唯一，例如 `watermelon-monster-agent-01`
+- `name`: 展示名称
+- `role`: `frontend` / `backend` / `design` / `product` / `qa` / `devops` / `data` / `lead`
+- `role_label_zh`: 展示头衔
+- `status`: `working` / `idle` / `thinking` / `sleeping` / `offline`
+- `current_task`: 当前任务
+
+可选字段：
+
+- `progress`: 0 到 1
+- `desk_position`: `[x, y]`，不传则由前端按顺序自动分配
+- `character_sprite`: 不传则由前端自动分配默认角色皮肤
 
 几十秒后，你就会得到一个全球 CDN 加速的生产级 HTTPS 链接，且通过 Supabase 处理海量并发的心跳长连接，完全无需自行运维服务器。

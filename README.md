@@ -235,6 +235,41 @@ AI-Agent-Pixel-Office/
 
 👉 [**supabase_vercel_deployment.md**](./supabase_vercel_deployment.md)
 
+### 必配环境变量
+
+如果你使用 **Vercel + Supabase**，前端页面要想真正显示数据库里的 Agent，必须额外配置下面两个变量。
+这两个变量是给前端页面读取 Supabase 用的，和各个 Agent 进程自己的 `HEARTBEAT_*` 变量不是一回事。
+
+**Vercel 前端 / 本地 `frontend/.env.local`**
+
+```env
+VITE_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=YOUR_SUPABASE_PUBLISHABLE_KEY
+```
+
+仓库里已提供模板文件：
+
+```bash
+frontend/.env.example
+```
+
+### 多 Agent 接入约定
+
+如果你会有多个 Agent 同时上报到这个页面，需要保证以下约定成立：
+
+- 每个 Agent 的 `id` 必须全局唯一，例如 `telegram-community-agent-01`
+- `name` 建议明确填写，否则前端会退回成 `Agent-{id}`
+- `role` 必须是这些值之一：`frontend` / `backend` / `design` / `product` / `qa` / `devops` / `data` / `lead`
+- `role_label_zh` 可以自定义，例如 `Telegram 社区管理 AI Agent`
+- `status` 必须是：`working` / `idle` / `thinking` / `sleeping` / `offline`
+- `desk_position` 和 `character_sprite` 可不传；前端会自动分配工位和默认角色皮肤
+
+如果页面里能看到 Ocean 但看不到你的其它 Agent，优先检查：
+
+- 前端是否已配置 `VITE_SUPABASE_URL` 和 `VITE_SUPABASE_PUBLISHABLE_KEY`
+- 前端连接的是否是与你写入心跳相同的 Supabase Project
+- 浏览器控制台是否出现 `[Supabase] Initial fetch error: ...`
+
 **架构要点：**
 - 前端托管在 Vercel（全球 CDN 加速）
 - 用 Supabase Realtime 替代 FastAPI WebSocket
