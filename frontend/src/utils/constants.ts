@@ -3,9 +3,8 @@ export const SCALE = 3;
 export const MAP_COLS = 30;
 export const MAP_ROWS = 40;
 export const CANVAS_WIDTH = MAP_COLS * TILE_SIZE;
-export const VIEWPORT_HEIGHT = 320; // Visible area height (same as old canvas)
 export const WORLD_HEIGHT = MAP_ROWS * TILE_SIZE; // 640px full map height
-export const CANVAS_HEIGHT = VIEWPORT_HEIGHT;
+export const CANVAS_HEIGHT = WORLD_HEIGHT;
 export const CHAR_SIZE = 16;
 
 // Colors - PICO-8 inspired palette

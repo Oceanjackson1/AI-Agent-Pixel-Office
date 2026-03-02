@@ -1,7 +1,7 @@
 import { Application, Container } from "pixi.js";
 import { createOfficeMap } from "./OfficeMap";
 import { AgentCharacter } from "./AgentCharacter";
-import { CANVAS_WIDTH, CANVAS_HEIGHT, WORLD_HEIGHT } from "../utils/constants";
+import { CANVAS_WIDTH, CANVAS_HEIGHT } from "../utils/constants";
 import type { AgentState, AgentStatus } from "../types/agent";
 
 export class OfficeScene {
@@ -13,13 +13,19 @@ export class OfficeScene {
   private initialized = false;
   private _destroyed = false;
 
-  // Camera panning state
-  private cameraY = 0;
-  private cameraTargetY: number | undefined;
-  private readonly maxCameraY = Math.max(0, WORLD_HEIGHT - CANVAS_HEIGHT);
+  // Zoom + pan camera state
+  private zoom = 1;
+  private targetZoom: number | undefined;
+  private panX = 0;
+  private panY = 0;
+  private targetPanX: number | undefined;
+  private targetPanY: number | undefined;
+  private minZoom = 0.5;
+  private readonly maxZoom = 1.5;
 
   // Drag state
   private dragging = false;
+  private lastPointerX = 0;
   private lastPointerY = 0;
 
   constructor() {
@@ -52,7 +58,7 @@ export class OfficeScene {
       return;
     }
 
-    // Root container (moves for camera scrolling)
+    // Root container (scaled + positioned for zoom/pan)
     this.app.stage.addChild(this.root);
 
     // Office map (static background)
@@ -61,6 +67,14 @@ export class OfficeScene {
 
     // Reuse the agentContainer from constructor (agents may already be added before init completes)
     this.root.addChild(this.agentContainer);
+
+    // Compute initial zoom to fit entire map in canvas
+    this.computeMinZoom(canvas);
+    this.zoom = this.minZoom;
+    // Center the map initially
+    this.panX = (CANVAS_WIDTH - CANVAS_WIDTH * this.zoom) / 2;
+    this.panY = (CANVAS_HEIGHT - CANVAS_HEIGHT * this.zoom) / 2;
+    this.applyCamera();
 
     // Camera controls
     this.setupCameraControls(canvas);
@@ -73,50 +87,145 @@ export class OfficeScene {
     this.initialized = true;
   }
 
+  private computeMinZoom(canvas: HTMLCanvasElement) {
+    // minZoom = the zoom at which the entire world fits in the canvas
+    // Since canvas resolution = world size, minZoom that fits both axes:
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width > 0 && rect.height > 0) {
+      // The canvas native size is CANVAS_WIDTH x CANVAS_HEIGHT.
+      // We want the full world visible, so minZoom = 1 means native.
+      // If canvas CSS is smaller we might need <1. But since canvas = world, min is 1
+      // to see full map, and >1 to zoom in.
+      this.minZoom = Math.min(
+        CANVAS_WIDTH / CANVAS_WIDTH,
+        CANVAS_HEIGHT / CANVAS_HEIGHT
+      );
+    }
+    // Ensure the full map is visible at minZoom = 1 (native resolution = world size)
+    this.minZoom = Math.max(0.3, Math.min(this.minZoom, 1));
+  }
+
   private setupCameraControls(canvas: HTMLCanvasElement) {
-    // Mouse wheel scrolling
+    // Mouse wheel zoom (anchored to mouse position)
     canvas.addEventListener("wheel", (e) => {
       e.preventDefault();
-      this.cameraTargetY = undefined; // Cancel any smooth scroll
-      this.cameraY = this.clampCameraY(this.cameraY + e.deltaY * 0.5);
-      this.root.y = -this.cameraY;
+      this.targetZoom = undefined;
+      this.targetPanX = undefined;
+      this.targetPanY = undefined;
+
+      const rect = canvas.getBoundingClientRect();
+      // Mouse position in canvas native coordinates
+      const mouseX = ((e.clientX - rect.left) / rect.width) * CANVAS_WIDTH;
+      const mouseY = ((e.clientY - rect.top) / rect.height) * CANVAS_HEIGHT;
+
+      // World position under mouse before zoom
+      const worldX = (mouseX - this.panX) / this.zoom;
+      const worldY = (mouseY - this.panY) / this.zoom;
+
+      // Apply zoom delta
+      const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+      this.zoom = Math.max(this.minZoom, Math.min(this.maxZoom, this.zoom * zoomFactor));
+
+      // Adjust pan so the same world point stays under the mouse
+      this.panX = mouseX - worldX * this.zoom;
+      this.panY = mouseY - worldY * this.zoom;
+
+      this.clampPan();
+      this.applyCamera();
     }, { passive: false });
 
-    // Touch/drag panning
+    // Drag panning
     canvas.addEventListener("pointerdown", (e) => {
       this.dragging = true;
+      this.lastPointerX = e.clientX;
       this.lastPointerY = e.clientY;
-      this.cameraTargetY = undefined; // Cancel any smooth scroll
+      this.targetZoom = undefined;
+      this.targetPanX = undefined;
+      this.targetPanY = undefined;
     });
     canvas.addEventListener("pointermove", (e) => {
       if (!this.dragging) return;
-      const dy = this.lastPointerY - e.clientY;
-      // Scale dy by the ratio of canvas native size to CSS display size
       const rect = canvas.getBoundingClientRect();
-      const scale = rect.height > 0 ? CANVAS_HEIGHT / rect.height : 1;
-      this.cameraY = this.clampCameraY(this.cameraY + dy * scale);
-      this.root.y = -this.cameraY;
+      const scaleX = rect.width > 0 ? CANVAS_WIDTH / rect.width : 1;
+      const scaleY = rect.height > 0 ? CANVAS_HEIGHT / rect.height : 1;
+      const dx = (e.clientX - this.lastPointerX) * scaleX;
+      const dy = (e.clientY - this.lastPointerY) * scaleY;
+      this.panX += dx;
+      this.panY += dy;
+      this.clampPan();
+      this.applyCamera();
+      this.lastPointerX = e.clientX;
       this.lastPointerY = e.clientY;
     });
     canvas.addEventListener("pointerup", () => { this.dragging = false; });
     canvas.addEventListener("pointerleave", () => { this.dragging = false; });
   }
 
-  private clampCameraY(y: number): number {
-    return Math.max(0, Math.min(this.maxCameraY, y));
+  private clampPan() {
+    // Ensure the map doesn't get dragged completely outside the canvas
+    const scaledW = CANVAS_WIDTH * this.zoom;
+    const scaledH = CANVAS_HEIGHT * this.zoom;
+
+    // If map is smaller than canvas, center it
+    if (scaledW <= CANVAS_WIDTH) {
+      this.panX = (CANVAS_WIDTH - scaledW) / 2;
+    } else {
+      this.panX = Math.min(0, Math.max(CANVAS_WIDTH - scaledW, this.panX));
+    }
+
+    if (scaledH <= CANVAS_HEIGHT) {
+      this.panY = (CANVAS_HEIGHT - scaledH) / 2;
+    } else {
+      this.panY = Math.min(0, Math.max(CANVAS_HEIGHT - scaledH, this.panY));
+    }
+  }
+
+  private applyCamera() {
+    this.root.scale.set(this.zoom);
+    this.root.x = this.panX;
+    this.root.y = this.panY;
   }
 
   private update(delta: number) {
-    // Smooth camera scroll (when scrollToAgent is used)
-    if (this.cameraTargetY !== undefined) {
-      const diff = this.cameraTargetY - this.cameraY;
-      if (Math.abs(diff) < 0.5) {
-        this.cameraY = this.cameraTargetY;
-        this.cameraTargetY = undefined;
+    // Smooth zoom animation (when scrollToAgent is used)
+    let cameraChanged = false;
+
+    if (this.targetZoom !== undefined) {
+      const diff = this.targetZoom - this.zoom;
+      if (Math.abs(diff) < 0.002) {
+        this.zoom = this.targetZoom;
+        this.targetZoom = undefined;
       } else {
-        this.cameraY += diff * 0.12;
+        this.zoom += diff * 0.1;
       }
-      this.root.y = -this.cameraY;
+      cameraChanged = true;
+    }
+
+    if (this.targetPanX !== undefined) {
+      const dx = this.targetPanX - this.panX;
+      if (Math.abs(dx) < 0.5) {
+        this.panX = this.targetPanX;
+        this.targetPanX = undefined;
+      } else {
+        this.panX += dx * 0.1;
+      }
+      cameraChanged = true;
+    }
+
+    if (this.targetPanY !== undefined) {
+      const dy = this.targetPanY - this.panY;
+      if (Math.abs(dy) < 0.5) {
+        this.panY = this.targetPanY;
+        this.targetPanY = undefined;
+      } else {
+        this.panY += dy * 0.1;
+      }
+      cameraChanged = true;
+    }
+
+    if (cameraChanged) {
+      this.clampPan();
+      this.applyCamera();
     }
 
     // Update all agents
@@ -132,14 +241,21 @@ export class OfficeScene {
   }
 
   /**
-   * Smooth-scroll the camera to center on a specific agent
+   * Smooth zoom + pan to center on a specific agent
    */
   scrollToAgent(agentId: string) {
     const agent = this.agents.get(agentId);
     if (!agent) return;
-    this.cameraTargetY = this.clampCameraY(
-      agent.container.y - CANVAS_HEIGHT / 2
-    );
+
+    // Zoom in to ~0.7 (or current if already zoomed in more)
+    const desiredZoom = Math.max(0.7, this.zoom);
+    this.targetZoom = Math.min(this.maxZoom, desiredZoom);
+
+    // Pan to center the agent
+    const agentWorldX = agent.container.x;
+    const agentWorldY = agent.container.y;
+    this.targetPanX = CANVAS_WIDTH / 2 - agentWorldX * (this.targetZoom ?? this.zoom);
+    this.targetPanY = CANVAS_HEIGHT / 2 - agentWorldY * (this.targetZoom ?? this.zoom);
   }
 
   /**

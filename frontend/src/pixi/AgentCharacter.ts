@@ -85,7 +85,7 @@ export class AgentCharacter {
     // Identity label (name + role)
     this.roleLabel = createRoleLabel(`${agent.name} · ${agent.role_label_zh}`);
     this.roleLabel.x = 8; // center of 16px character
-    this.roleLabel.y = -9;
+    this.roleLabel.y = -12;
     this.container.addChild(this.roleLabel);
 
     // Initialize based on status
@@ -105,7 +105,7 @@ export class AgentCharacter {
   /** Offset the task bubble Y position (for de-overlap) */
   setBubbleYOffset(offset: number) {
     if (this.taskBubble) {
-      this.taskBubble.y = -20 + offset;
+      this.taskBubble.y = -24 + offset;
     }
   }
 
@@ -176,7 +176,7 @@ export class AgentCharacter {
     if (task) {
       this.taskBubble = createTaskBubble(task);
       this.taskBubble.x = 8;
-      this.taskBubble.y = -20;
+      this.taskBubble.y = -24;
       this.container.addChild(this.taskBubble);
     }
   }
@@ -194,7 +194,7 @@ export class AgentCharacter {
     if (this.currentTaskText && !this.taskBubble) {
       this.taskBubble = createTaskBubble(this.currentTaskText);
       this.taskBubble.x = 8;
-      this.taskBubble.y = -20;
+      this.taskBubble.y = -24;
       this.container.addChild(this.taskBubble);
     }
   }

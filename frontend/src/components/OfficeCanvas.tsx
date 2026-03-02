@@ -145,7 +145,6 @@ export function OfficeCanvas() {
           height: canvasSize.h,
           borderRadius: 16,
           boxShadow: "0 8px 32px rgba(0,0,0,0.08)",
-          imageRendering: "pixelated",
         }}
       />
     </div>

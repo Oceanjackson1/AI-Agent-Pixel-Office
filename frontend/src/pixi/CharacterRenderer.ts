@@ -226,7 +226,7 @@ export function createRoleLabel(text: string): Container {
   const container = new Container();
 
   const style = new TextStyle({
-    fontSize: 7,
+    fontSize: 9,
     fill: COLORS.LABEL_TEXT,
     fontFamily:
       '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif',
@@ -234,7 +234,7 @@ export function createRoleLabel(text: string): Container {
     stroke: { color: 0x0044aa, width: 1 },
   });
 
-  const label = new Text({ text, style, resolution: 2 });
+  const label = new Text({ text, style, resolution: 3 });
   label.anchor.set(0.5, 0.5);
 
   // Background
@@ -263,12 +263,12 @@ export function createRoleLabel(text: string): Container {
  */
 export function createZzzEffect(): Text {
   const style = new TextStyle({
-    fontSize: 6,
+    fontSize: 8,
     fill: COLORS.ZZZ_COLOR,
     fontFamily: "monospace",
     fontWeight: "bold",
   });
-  return new Text({ text: "z", style });
+  return new Text({ text: "z", style, resolution: 3 });
 }
 
 /**
@@ -277,24 +277,24 @@ export function createZzzEffect(): Text {
 export function createTaskBubble(task: string): Container {
   const container = new Container();
   const isLongText = task.length > 18;
-  const paddingX = isLongText ? 4 : 2;
-  const paddingY = isLongText ? 3 : 2;
-  const bubbleMaxWidth = isLongText ? 150 : 96;
+  const paddingX = isLongText ? 5 : 3;
+  const paddingY = isLongText ? 4 : 3;
+  const bubbleMaxWidth = isLongText ? 160 : 110;
 
   const style = new TextStyle({
-    fontSize: 7,
+    fontSize: 9,
     fill: 0x1d1d1f,
     fontFamily:
       '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif',
     fontWeight: "600",
     align: "center",
     breakWords: true,
-    lineHeight: 8,
+    lineHeight: 11,
     wordWrap: true,
     wordWrapWidth: bubbleMaxWidth - paddingX * 2,
   });
 
-  const text = new Text({ text: task, style, resolution: 2 });
+  const text = new Text({ text: task, style, resolution: 3 });
   text.anchor.set(0.5, 0.5);
 
   const bg = new Graphics();
