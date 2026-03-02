@@ -23,7 +23,6 @@ export class AgentCharacter {
   private spriteKey: string;
   private roleLabel: Container;
   private zzzText: Text | null = null;
-  private taskBubble: Container | null = null;
   private animState: AnimState = "sleeping";
   private walkFrame = 0;
   private walkTimer = 0;
@@ -34,9 +33,6 @@ export class AgentCharacter {
   private zzzPhase = 0;
   private idleTimer = 0;
   private workAnimTimer = 0;
-
-  // Cached task text for restoring bubble after wandering
-  private currentTaskText: string | null = null;
 
   // Wander sub-state for working agents
   private wanderState: WanderState = "at_desk";
@@ -167,12 +163,12 @@ export class AgentCharacter {
     );
   }
 
-  private setTaskText(task: string | null) {
-    this.currentTaskText = task;
+  private setTaskText(_task: string | null) {
+    // No-op: task info shown in right panel only
   }
 
   private clearTaskText() {
-    this.currentTaskText = null;
+    // No-op
   }
 
   private restoreTaskBubble() {
