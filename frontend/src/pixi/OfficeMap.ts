@@ -22,12 +22,8 @@ function createLayout(): number[][] {
       else if (y === 1) {
         map[y][x] = 1;
       }
-      // Carpet area — right side lounge (expanded for taller map)
-      else if (x >= 20 && y >= 14 && y <= 18) {
-        map[y][x] = 2;
-      }
-      // Second carpet area — bottom lounge
-      else if (x >= 20 && y >= 34 && y <= 38) {
+      // Carpet area — bottom-right lounge
+      else if (x >= 40 && y >= 20 && y <= 23) {
         map[y][x] = 2;
       }
       // Default floor
@@ -41,27 +37,26 @@ function createLayout(): number[][] {
 
 // All desk tile positions (2 tiles wide each) — used by collision map
 const DESK_TILES: [number, number][] = [
-  // Row 1 (y=5): 4 desks
-  [3, 5], [4, 5], [8, 5], [9, 5], [13, 5], [14, 5], [18, 5], [19, 5],
-  // Row 2 (y=12): 4 desks
-  [3, 12], [4, 12], [8, 12], [9, 12], [13, 12], [14, 12], [18, 12], [19, 12],
-  // Row 3 (y=19): 4 desks
-  [3, 19], [4, 19], [8, 19], [9, 19], [13, 19], [14, 19], [18, 19], [19, 19],
-  // Row 4 (y=26): 4 desks
-  [3, 26], [4, 26], [8, 26], [9, 26], [13, 26], [14, 26], [18, 26], [19, 26],
-  // Row 5 (y=33): 4 desks
-  [3, 33], [4, 33], [8, 33], [9, 33], [13, 33], [14, 33], [18, 33], [19, 33],
+  // Row 1 (y=4): 6 desks
+  [3, 4], [4, 4], [10, 4], [11, 4], [17, 4], [18, 4],
+  [24, 4], [25, 4], [31, 4], [32, 4], [38, 4], [39, 4],
+  // Row 2 (y=10): 6 desks
+  [3, 10], [4, 10], [10, 10], [11, 10], [17, 10], [18, 10],
+  [24, 10], [25, 10], [31, 10], [32, 10], [38, 10], [39, 10],
+  // Row 3 (y=16): 6 desks
+  [3, 16], [4, 16], [10, 16], [11, 16], [17, 16], [18, 16],
+  [24, 16], [25, 16], [31, 16], [32, 16], [38, 16], [39, 16],
   // Lead desk (top-right)
-  [23, 2], [24, 2],
+  [44, 2], [45, 2],
 ];
 
 // Points of interest for agent wandering (exported for AgentCharacter)
 export const POI_LOCATIONS: [number, number][] = [
-  [23, 9],   // Whiteboard area
-  [24, 16],  // Bookshelf / reading area
-  [24, 23],  // Coffee machine area
-  [10, 30],  // Meeting table area
-  [24, 36],  // Bottom lounge area
+  [44, 8],   // Whiteboard area
+  [44, 14],  // Coffee machine area
+  [12, 22],  // Meeting table area
+  [30, 22],  // Bookshelf / reading area
+  [42, 22],  // Bottom-right lounge area
 ];
 
 // Collision map: true = walkable
@@ -78,22 +73,19 @@ export function createCollisionMap(): boolean[][] {
   const furniturePositions: [number, number][] = [
     ...DESK_TILES,
     // Whiteboard
-    [22, 6], [23, 6], [24, 6], [22, 7], [23, 7], [24, 7],
-    // Bookshelves (upper)
-    [22, 16], [23, 16], [24, 16], [25, 16], [26, 16], [27, 16],
-    [22, 17], [23, 17], [24, 17], [25, 17], [26, 17], [27, 17],
-    // Bookshelves (lower)
-    [22, 36], [23, 36], [24, 36], [25, 36], [26, 36], [27, 36],
-    [22, 37], [23, 37], [24, 37], [25, 37], [26, 37], [27, 37],
+    [44, 6], [45, 6], [46, 6], [44, 7], [45, 7], [46, 7],
+    // Bookshelves (bottom area)
+    [28, 21], [29, 21], [30, 21], [31, 21], [32, 21], [33, 21],
+    [28, 22], [29, 22], [30, 22], [31, 22], [32, 22], [33, 22],
     // Plants
-    [2, 2], [15, 2], [2, 38], [15, 38],
+    [2, 2], [20, 2], [2, 23], [20, 23],
     // Servers
-    [3, 16], [4, 16],
+    [3, 13], [4, 13],
     // Coffee machine
-    [23, 22], [24, 22],
+    [44, 12], [45, 12],
     // Meeting table
-    [8, 29], [9, 29], [10, 29], [11, 29],
-    [8, 30], [9, 30], [10, 30], [11, 30],
+    [10, 21], [11, 21], [12, 21], [13, 21],
+    [10, 22], [11, 22], [12, 22], [13, 22],
   ];
 
   for (const [x, y] of furniturePositions) {
@@ -151,8 +143,7 @@ export function createOfficeMap(): Container {
   const furniture = new Graphics();
   drawDesks(furniture);
   drawWhiteboard(furniture);
-  drawBookshelves(furniture, 22, 16);
-  drawBookshelves(furniture, 22, 36);
+  drawBookshelves(furniture, 28, 21);
   drawPlants(furniture);
   drawServers(furniture);
   drawCoffeeMachine(furniture);
@@ -164,18 +155,17 @@ export function createOfficeMap(): Container {
 
 function drawDesks(g: Graphics) {
   const deskPositions = [
-    // Row 1 (y=5): 4 desks
-    { x: 3, y: 5 }, { x: 8, y: 5 }, { x: 13, y: 5 }, { x: 18, y: 5 },
-    // Row 2 (y=12): 4 desks
-    { x: 3, y: 12 }, { x: 8, y: 12 }, { x: 13, y: 12 }, { x: 18, y: 12 },
-    // Row 3 (y=19): 4 desks
-    { x: 3, y: 19 }, { x: 8, y: 19 }, { x: 13, y: 19 }, { x: 18, y: 19 },
-    // Row 4 (y=26): 4 desks
-    { x: 3, y: 26 }, { x: 8, y: 26 }, { x: 13, y: 26 }, { x: 18, y: 26 },
-    // Row 5 (y=33): 4 desks
-    { x: 3, y: 33 }, { x: 8, y: 33 }, { x: 13, y: 33 }, { x: 18, y: 33 },
+    // Row 1 (y=4): 6 desks
+    { x: 3, y: 4 }, { x: 10, y: 4 }, { x: 17, y: 4 },
+    { x: 24, y: 4 }, { x: 31, y: 4 }, { x: 38, y: 4 },
+    // Row 2 (y=10): 6 desks
+    { x: 3, y: 10 }, { x: 10, y: 10 }, { x: 17, y: 10 },
+    { x: 24, y: 10 }, { x: 31, y: 10 }, { x: 38, y: 10 },
+    // Row 3 (y=16): 6 desks
+    { x: 3, y: 16 }, { x: 10, y: 16 }, { x: 17, y: 16 },
+    { x: 24, y: 16 }, { x: 31, y: 16 }, { x: 38, y: 16 },
     // Lead desk (top-right)
-    { x: 23, y: 2 },
+    { x: 44, y: 2 },
   ];
 
   for (const desk of deskPositions) {
@@ -209,7 +199,7 @@ function drawDesks(g: Graphics) {
 }
 
 function drawWhiteboard(g: Graphics) {
-  const px = 22 * TILE_SIZE;
+  const px = 44 * TILE_SIZE;
   const py = 6 * TILE_SIZE;
 
   // Board frame
@@ -258,12 +248,12 @@ function drawBookshelves(g: Graphics, startX: number, startY: number) {
 function drawPlants(g: Graphics) {
   const positions = [
     [2, 2],
-    [15, 2],
-    [2, 38],
-    [15, 38],
-    // Extra mid-map plants for visual breaks
-    [2, 22],
-    [15, 22],
+    [20, 2],
+    [2, 23],
+    [20, 23],
+    // Extra plants for visual breaks
+    [2, 13],
+    [48, 13],
   ];
 
   for (const [x, y] of positions) {
@@ -286,8 +276,8 @@ function drawPlants(g: Graphics) {
 
 function drawServers(g: Graphics) {
   const positions: [number, number][] = [
-    [3, 16],
-    [4, 16],
+    [3, 13],
+    [4, 13],
   ];
 
   for (const [x, y] of positions) {
@@ -310,8 +300,8 @@ function drawServers(g: Graphics) {
 }
 
 function drawCoffeeMachine(g: Graphics) {
-  const px = 23 * TILE_SIZE;
-  const py = 22 * TILE_SIZE;
+  const px = 44 * TILE_SIZE;
+  const py = 12 * TILE_SIZE;
 
   // Machine body
   g.rect(px, py, TILE_SIZE * 2, TILE_SIZE);
@@ -334,8 +324,8 @@ function drawCoffeeMachine(g: Graphics) {
 }
 
 function drawMeetingTable(g: Graphics) {
-  const px = 8 * TILE_SIZE;
-  const py = 29 * TILE_SIZE;
+  const px = 10 * TILE_SIZE;
+  const py = 21 * TILE_SIZE;
 
   // Large table surface (4×2 tiles)
   g.rect(px, py, TILE_SIZE * 4, TILE_SIZE * 2);

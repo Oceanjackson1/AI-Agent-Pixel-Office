@@ -2,7 +2,7 @@ import type { AgentState } from "../types/agent";
 
 export const OCEAN_LEADER_ID = "ocean-lead-01";
 
-const OCEAN_DESK_POSITION: [number, number] = [23, 2];
+const OCEAN_DESK_POSITION: [number, number] = [44, 2];
 
 const OCEAN_PATROL_TASKS = [
   "巡视办公室",

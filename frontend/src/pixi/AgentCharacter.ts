@@ -6,7 +6,7 @@ import {
   createZzzEffect,
   createTaskBubble,
 } from "./CharacterRenderer";
-import { TILE_SIZE, MAP_ROWS } from "../utils/constants";
+import { TILE_SIZE, MAP_COLS, MAP_ROWS } from "../utils/constants";
 import { POI_LOCATIONS } from "./OfficeMap";
 import type { OfficeScene } from "./OfficeScene";
 
@@ -159,7 +159,7 @@ export class AgentCharacter {
   }
 
   private setWalkPath(toX: number, toY: number) {
-    this.targetGridX = Math.max(2, Math.min(toX, 27));
+    this.targetGridX = Math.max(2, Math.min(toX, MAP_COLS - 3));
     this.targetGridY = Math.max(3, Math.min(toY, MAP_ROWS - 3));
   }
 

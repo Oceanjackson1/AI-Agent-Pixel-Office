@@ -2,11 +2,11 @@ import { useAgentStore } from "../hooks/useAgentStore";
 import type { AgentState, AgentStatus } from "../types/agent";
 
 const STATUS_EMOJI: Record<AgentStatus, string> = {
-  working: "\u{1F4BB}",
-  idle: "\u2615",
-  thinking: "\u{1F914}",
-  sleeping: "\u{1F634}",
-  offline: "\u26AB",
+  working: "💻",
+  idle: "☕",
+  thinking: "🤔",
+  sleeping: "😴",
+  offline: "⚫",
 };
 
 type StatusGroup = {
@@ -35,9 +35,9 @@ function groupAgents(agents: AgentState[]): StatusGroup[] {
   }
 
   const groups: StatusGroup[] = [];
-  if (working.length > 0) groups.push({ key: "working", label: "\u5DE5\u4F5C\u4E2D", agents: working });
-  if (thinking.length > 0) groups.push({ key: "thinking", label: "\u601D\u8003\u4E2D", agents: thinking });
-  if (resting.length > 0) groups.push({ key: "resting", label: "\u4F11\u606F\u4E2D", agents: resting });
+  if (working.length > 0) groups.push({ key: "working", label: "工作中", agents: working });
+  if (thinking.length > 0) groups.push({ key: "thinking", label: "思考中", agents: thinking });
+  if (resting.length > 0) groups.push({ key: "resting", label: "休息中", agents: resting });
   return groups;
 }
 
@@ -49,8 +49,8 @@ export function StatusPanel() {
   if (agentList.length === 0) {
     return (
       <div className="scrollable-panel" style={panelStyle}>
-        <h3 style={titleStyle}>{"\u{1F3E2}"} Ocean\u7684\u725B\u9A6C\u5927\u519B</h3>
-        <p style={connectingStyle}>\u6B63\u5728\u8FDE\u63A5\u670D\u52A1\u5668...</p>
+        <h3 style={titleStyle}>{"🏢 Ocean的牛马大军"}</h3>
+        <p style={connectingStyle}>{"正在连接服务器..."}</p>
       </div>
     );
   }
@@ -62,11 +62,11 @@ export function StatusPanel() {
 
   return (
     <div className="scrollable-panel" style={panelStyle}>
-      <h3 style={titleStyle}>{"\u{1F3E2}"} Ocean\u7684\u725B\u9A6C\u5927\u519B</h3>
+      <h3 style={titleStyle}>{"🏢 Ocean的牛马大军"}</h3>
       <div style={statsStyle}>
-        {workingCount > 0 && <span style={statBadge("working")}>{workingCount} \u5DE5\u4F5C</span>}
-        {thinkingCount > 0 && <span style={statBadge("thinking")}>{thinkingCount} \u601D\u8003</span>}
-        {restingCount > 0 && <span style={statBadge("sleeping")}>{restingCount} \u4F11\u606F</span>}
+        {workingCount > 0 && <span style={statBadge("working")}>{workingCount} {"工作"}</span>}
+        {thinkingCount > 0 && <span style={statBadge("thinking")}>{thinkingCount} {"思考"}</span>}
+        {restingCount > 0 && <span style={statBadge("sleeping")}>{restingCount} {"休息"}</span>}
       </div>
 
       <div style={groupListStyle}>
@@ -115,7 +115,7 @@ export function StatusPanel() {
   );
 }
 
-// --- Styles ---
+// --- Apple HIG Styles ---
 
 const panelStyle: React.CSSProperties = {
   width: 330,
@@ -132,6 +132,8 @@ const panelStyle: React.CSSProperties = {
   display: "flex",
   flexDirection: "column",
   gap: "12px",
+  WebkitFontSmoothing: "antialiased",
+  MozOsxFontSmoothing: "grayscale",
 };
 
 const titleStyle: React.CSSProperties = {
@@ -159,7 +161,7 @@ const statsStyle: React.CSSProperties = {
 function statBadge(status: string): React.CSSProperties {
   const colors: Record<string, { bg: string; fg: string }> = {
     working: { bg: "#e5f0e9", fg: "#2e7d32" },
-    thinking: { bg: "#fff8e1", fg: "#f57f17" },
+    thinking: { bg: "#fef3c7", fg: "#d97706" },
     sleeping: { bg: "#f2f2f7", fg: "#8e8e93" },
   };
   const c = colors[status] || colors.sleeping;
@@ -186,11 +188,12 @@ const groupStyle: React.CSSProperties = {
 };
 
 const groupHeaderStyle: React.CSSProperties = {
-  fontSize: 12,
+  fontSize: 11,
   fontWeight: 600,
   color: "#86868b",
   marginBottom: 4,
   paddingLeft: 2,
+  letterSpacing: "0.5px",
 };
 
 const groupCardsStyle: React.CSSProperties = {
@@ -201,10 +204,10 @@ const groupCardsStyle: React.CSSProperties = {
 
 const agentCardStyle: React.CSSProperties = {
   background: "#ffffff",
-  borderRadius: 10,
+  borderRadius: 8,
   padding: "8px 10px",
-  boxShadow: "0 1px 4px rgba(0,0,0,0.03)",
-  border: "1px solid rgba(0,0,0,0.04)",
+  boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+  border: "1px solid rgba(0,0,0,0.06)",
   display: "flex",
   flexDirection: "column",
   gap: 3,
@@ -252,7 +255,7 @@ const taskTextStyle: React.CSSProperties = {
   whiteSpace: "nowrap",
   overflow: "hidden",
   textOverflow: "ellipsis",
-  paddingLeft: 19, // align with name (emoji + gap)
+  paddingLeft: 19,
 };
 
 const progressRowStyle: React.CSSProperties = {
@@ -264,21 +267,21 @@ const progressRowStyle: React.CSSProperties = {
 
 const progressBarBgStyle: React.CSSProperties = {
   flex: 1,
-  height: 3,
+  height: 4,
   background: "#f2f2f7",
-  borderRadius: 3,
+  borderRadius: 2,
   overflow: "hidden",
 };
 
 const progressBarFillStyle: React.CSSProperties = {
   height: "100%",
   background: "#34c759",
-  borderRadius: 3,
+  borderRadius: 2,
   transition: "width 0.4s cubic-bezier(0.25, 0.1, 0.25, 1)",
 };
 
 const progressTextStyle: React.CSSProperties = {
-  fontSize: 10,
+  fontSize: 11,
   color: "#86868b",
   fontWeight: 500,
   minWidth: 28,

@@ -1,7 +1,7 @@
 export const TILE_SIZE = 16;
 export const SCALE = 3;
-export const MAP_COLS = 30;
-export const MAP_ROWS = 40;
+export const MAP_COLS = 50;
+export const MAP_ROWS = 25;
 export const CANVAS_WIDTH = MAP_COLS * TILE_SIZE;
 export const WORLD_HEIGHT = MAP_ROWS * TILE_SIZE; // 640px full map height
 export const CANVAS_HEIGHT = WORLD_HEIGHT;
