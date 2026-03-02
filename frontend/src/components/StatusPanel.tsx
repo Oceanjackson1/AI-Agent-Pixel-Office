@@ -95,55 +95,43 @@ export function StatusPanel() {
               {group.label} ({group.agents.length})
             </div>
             <div style={groupCardsStyle}>
-              {group.key === "resting"
-                ? group.agents.map((agent) => (
-                  <div
-                    key={agent.id}
-                    style={compactCardStyle}
-                    onClick={() => scrollToAgent?.(agent.id)}
-                  >
+              {group.agents.map((agent) => (
+                <div
+                  key={agent.id}
+                  style={agentCardStyle}
+                  onClick={() => scrollToAgent?.(agent.id)}
+                >
+                  <div style={agentHeaderStyle}>
                     <StatusDot status={agent.status} />
-                    <span style={compactNameStyle}>{agent.name}</span>
-                    <span style={compactRoleStyle}>{agent.role_label_zh}</span>
+                    <span style={agentNameStyle}>{agent.name}</span>
                   </div>
-                ))
-                : group.agents.map((agent) => (
+                  <div style={roleTextStyle}>{agent.role_label_zh}</div>
+                  <div style={taskTextStyle}>
+                    {agent.current_task || " "}
+                  </div>
                   <div
-                    key={agent.id}
-                    style={agentCardStyle}
-                    onClick={() => scrollToAgent?.(agent.id)}
+                    style={{
+                      ...progressRowStyle,
+                      visibility:
+                        agent.progress != null && agent.progress > 0
+                          ? "visible"
+                          : "hidden",
+                    }}
                   >
-                    <div style={agentHeaderStyle}>
-                      <StatusDot status={agent.status} />
-                      <span style={agentNameStyle}>{agent.name}</span>
+                    <div style={progressBarBgStyle}>
+                      <div
+                        style={{
+                          ...progressBarFillStyle,
+                          width: `${(agent.progress || 0) * 100}%`,
+                        }}
+                      />
                     </div>
-                    <div style={roleTextStyle}>{agent.role_label_zh}</div>
-                    <div style={taskTextStyle}>
-                      {agent.current_task || " "}
-                    </div>
-                    <div
-                      style={{
-                        ...progressRowStyle,
-                        visibility:
-                          agent.progress != null && agent.progress > 0
-                            ? "visible"
-                            : "hidden",
-                      }}
-                    >
-                      <div style={progressBarBgStyle}>
-                        <div
-                          style={{
-                            ...progressBarFillStyle,
-                            width: `${(agent.progress || 0) * 100}%`,
-                          }}
-                        />
-                      </div>
-                      <span style={progressTextStyle}>
-                        {Math.round((agent.progress || 0) * 100)}%
-                      </span>
-                    </div>
+                    <span style={progressTextStyle}>
+                      {Math.round((agent.progress || 0) * 100)}%
+                    </span>
                   </div>
-                ))}
+                </div>
+              ))}
             </div>
           </div>
         ))}
@@ -344,30 +332,4 @@ const progressTextStyle: React.CSSProperties = {
   textAlign: "right",
 };
 
-// --- Resting (compact) cards ---
 
-const compactCardStyle: React.CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  gap: 8,
-  padding: "6px 12px",
-  background: "#ffffff",
-  borderRadius: 8,
-  border: "1px solid rgba(0,0,0,0.04)",
-  cursor: "pointer",
-  transition: "background 0.15s",
-  height: 44,
-  boxSizing: "border-box",
-};
-
-const compactNameStyle: React.CSSProperties = {
-  fontSize: 13,
-  fontWeight: 500,
-  color: "#1d1d1f",
-  flex: 1,
-};
-
-const compactRoleStyle: React.CSSProperties = {
-  fontSize: 11,
-  color: "#aeaeb2",
-};
