@@ -1,12 +1,12 @@
 import { useAgentStore } from "../hooks/useAgentStore";
 import type { AgentState, AgentStatus } from "../types/agent";
 
-const STATUS_EMOJI: Record<AgentStatus, string> = {
-  working: "💻",
-  idle: "☕",
-  thinking: "🤔",
-  sleeping: "😴",
-  offline: "⚫",
+const DOT_COLORS: Record<AgentStatus, string> = {
+  working: "#34c759",
+  thinking: "#ff9f0a",
+  idle: "#c7c7cc",
+  sleeping: "#c7c7cc",
+  offline: "#c7c7cc",
 };
 
 type StatusGroup = {
@@ -41,6 +41,10 @@ function groupAgents(agents: AgentState[]): StatusGroup[] {
   return groups;
 }
 
+function StatusDot({ status }: { status: AgentStatus }) {
+  return <span style={dotStyle(status)} />;
+}
+
 export function StatusPanel() {
   const agents = useAgentStore((s) => s.agents);
   const scrollToAgent = useAgentStore((s) => s.scrollToAgent);
@@ -64,9 +68,24 @@ export function StatusPanel() {
     <div className="scrollable-panel" style={panelStyle}>
       <h3 style={titleStyle}>{"🏢 Ocean的牛马大军"}</h3>
       <div style={statsStyle}>
-        {workingCount > 0 && <span style={statBadge("working")}>{workingCount} {"工作"}</span>}
-        {thinkingCount > 0 && <span style={statBadge("thinking")}>{thinkingCount} {"思考"}</span>}
-        {restingCount > 0 && <span style={statBadge("sleeping")}>{restingCount} {"休息"}</span>}
+        {workingCount > 0 && (
+          <span style={statBadge("working")}>
+            <span style={statDotStyle("#34c759")} />
+            {workingCount} {"工作"}
+          </span>
+        )}
+        {thinkingCount > 0 && (
+          <span style={statBadge("thinking")}>
+            <span style={statDotStyle("#ff9f0a")} />
+            {thinkingCount} {"思考"}
+          </span>
+        )}
+        {restingCount > 0 && (
+          <span style={statBadge("sleeping")}>
+            <span style={statDotStyle("#c7c7cc")} />
+            {restingCount} {"休息"}
+          </span>
+        )}
       </div>
 
       <div style={groupListStyle}>
@@ -76,37 +95,49 @@ export function StatusPanel() {
               {group.label} ({group.agents.length})
             </div>
             <div style={groupCardsStyle}>
-              {group.agents.map((agent) => (
-                <div
-                  key={agent.id}
-                  style={group.key === "resting" ? compactCardStyle : agentCardStyle}
-                  onClick={() => scrollToAgent?.(agent.id)}
-                >
-                  <div style={agentRowStyle}>
-                    <span style={emojiStyle}>{STATUS_EMOJI[agent.status]}</span>
-                    <span style={agentNameStyle}>{agent.name}</span>
-                    <span style={roleBadgeStyle}>{agent.role_label_zh}</span>
-                  </div>
-                  {group.key !== "resting" && agent.current_task && (
-                    <div style={taskTextStyle}>{agent.current_task}</div>
-                  )}
-                  {group.key !== "resting" && agent.progress != null && agent.progress > 0 && (
-                    <div style={progressRowStyle}>
-                      <div style={progressBarBgStyle}>
-                        <div
-                          style={{
-                            ...progressBarFillStyle,
-                            width: `${agent.progress * 100}%`,
-                          }}
-                        />
-                      </div>
-                      <span style={progressTextStyle}>
-                        {Math.round(agent.progress * 100)}%
-                      </span>
+              {group.key === "resting"
+                ? group.agents.map((agent) => (
+                    <div
+                      key={agent.id}
+                      style={compactCardStyle}
+                      onClick={() => scrollToAgent?.(agent.id)}
+                    >
+                      <StatusDot status={agent.status} />
+                      <span style={compactNameStyle}>{agent.name}</span>
+                      <span style={compactRoleStyle}>{agent.role_label_zh}</span>
                     </div>
-                  )}
-                </div>
-              ))}
+                  ))
+                : group.agents.map((agent) => (
+                    <div
+                      key={agent.id}
+                      style={agentCardStyle}
+                      onClick={() => scrollToAgent?.(agent.id)}
+                    >
+                      <div style={agentHeaderStyle}>
+                        <StatusDot status={agent.status} />
+                        <span style={agentNameStyle}>{agent.name}</span>
+                      </div>
+                      <div style={roleTextStyle}>{agent.role_label_zh}</div>
+                      {agent.current_task && (
+                        <div style={taskTextStyle}>{agent.current_task}</div>
+                      )}
+                      {agent.progress != null && agent.progress > 0 && (
+                        <div style={progressRowStyle}>
+                          <div style={progressBarBgStyle}>
+                            <div
+                              style={{
+                                ...progressBarFillStyle,
+                                width: `${agent.progress * 100}%`,
+                              }}
+                            />
+                          </div>
+                          <span style={progressTextStyle}>
+                            {Math.round(agent.progress * 100)}%
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
             </div>
           </div>
         ))}
@@ -121,7 +152,7 @@ const panelStyle: React.CSSProperties = {
   width: 330,
   minWidth: 330,
   height: "100vh",
-  background: "rgba(255, 255, 255, 0.75)",
+  background: "rgba(255, 255, 255, 0.78)",
   backdropFilter: "blur(20px)",
   WebkitBackdropFilter: "blur(20px)",
   color: "#1d1d1f",
@@ -172,6 +203,30 @@ function statBadge(status: string): React.CSSProperties {
     color: c.fg,
     fontSize: 12,
     fontWeight: 500,
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 5,
+  };
+}
+
+function statDotStyle(color: string): React.CSSProperties {
+  return {
+    display: "inline-block",
+    width: 6,
+    height: 6,
+    borderRadius: "50%",
+    background: color,
+  };
+}
+
+function dotStyle(status: AgentStatus): React.CSSProperties {
+  return {
+    display: "inline-block",
+    width: 8,
+    height: 8,
+    borderRadius: "50%",
+    background: DOT_COLORS[status],
+    flexShrink: 0,
   };
 }
 
@@ -184,14 +239,14 @@ const groupListStyle: React.CSSProperties = {
 const groupStyle: React.CSSProperties = {
   display: "flex",
   flexDirection: "column",
-  gap: 2,
+  gap: 4,
 };
 
 const groupHeaderStyle: React.CSSProperties = {
   fontSize: 11,
   fontWeight: 600,
   color: "#86868b",
-  marginBottom: 4,
+  marginBottom: 2,
   paddingLeft: 2,
   letterSpacing: "0.5px",
 };
@@ -199,70 +254,59 @@ const groupHeaderStyle: React.CSSProperties = {
 const groupCardsStyle: React.CSSProperties = {
   display: "flex",
   flexDirection: "column",
-  gap: 2,
+  gap: 4,
 };
+
+// --- Working / Thinking cards ---
 
 const agentCardStyle: React.CSSProperties = {
   background: "#ffffff",
-  borderRadius: 8,
-  padding: "8px 10px",
+  borderRadius: 10,
+  padding: "10px 12px",
   boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
   border: "1px solid rgba(0,0,0,0.06)",
   display: "flex",
   flexDirection: "column",
-  gap: 3,
+  gap: 2,
   cursor: "pointer",
   transition: "background 0.15s",
 };
 
-const compactCardStyle: React.CSSProperties = {
-  ...agentCardStyle,
-  padding: "6px 10px",
-  gap: 0,
-};
-
-const agentRowStyle: React.CSSProperties = {
+const agentHeaderStyle: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
-  gap: 6,
-};
-
-const emojiStyle: React.CSSProperties = {
-  fontSize: 13,
-  lineHeight: 1,
+  gap: 8,
 };
 
 const agentNameStyle: React.CSSProperties = {
   fontWeight: 600,
   color: "#1d1d1f",
-  flex: 1,
   fontSize: 13,
 };
 
-const roleBadgeStyle: React.CSSProperties = {
-  padding: "2px 6px",
-  borderRadius: 6,
-  background: "#f0f4ff",
-  fontSize: 10,
-  fontWeight: 500,
-  color: "#0066cc",
+const roleTextStyle: React.CSSProperties = {
+  fontSize: 12,
+  color: "#86868b",
+  paddingLeft: 16,
 };
 
 const taskTextStyle: React.CSSProperties = {
-  color: "#555",
   fontSize: 12,
+  color: "#999",
+  paddingLeft: 16,
   lineHeight: 1.4,
-  whiteSpace: "nowrap",
+  display: "-webkit-box",
+  WebkitLineClamp: 2,
+  WebkitBoxOrient: "vertical",
   overflow: "hidden",
-  textOverflow: "ellipsis",
-  paddingLeft: 19,
 };
 
 const progressRowStyle: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
   gap: 6,
-  paddingLeft: 19,
+  paddingLeft: 16,
+  marginTop: 2,
 };
 
 const progressBarBgStyle: React.CSSProperties = {
@@ -286,4 +330,30 @@ const progressTextStyle: React.CSSProperties = {
   fontWeight: 500,
   minWidth: 28,
   textAlign: "right",
+};
+
+// --- Resting (compact) cards ---
+
+const compactCardStyle: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 8,
+  padding: "6px 12px",
+  background: "#ffffff",
+  borderRadius: 8,
+  border: "1px solid rgba(0,0,0,0.04)",
+  cursor: "pointer",
+  transition: "background 0.15s",
+};
+
+const compactNameStyle: React.CSSProperties = {
+  fontSize: 13,
+  fontWeight: 500,
+  color: "#1d1d1f",
+  flex: 1,
+};
+
+const compactRoleStyle: React.CSSProperties = {
+  fontSize: 11,
+  color: "#aeaeb2",
 };

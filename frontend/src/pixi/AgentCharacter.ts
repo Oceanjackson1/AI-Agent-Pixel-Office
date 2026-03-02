@@ -4,7 +4,6 @@ import {
   createCharacterFrames,
   createRoleLabel,
   createZzzEffect,
-  createTaskBubble,
 } from "./CharacterRenderer";
 import { TILE_SIZE, MAP_COLS, MAP_ROWS } from "../utils/constants";
 import { POI_LOCATIONS } from "./OfficeMap";
@@ -82,8 +81,8 @@ export class AgentCharacter {
     this.frames.sleeping.visible = true;
     this.activeFrameKey = "sleeping";
 
-    // Identity label (name + role)
-    this.roleLabel = createRoleLabel(`${agent.name} · ${agent.role_label_zh}`);
+    // Identity label (name only — role/task shown in right panel)
+    this.roleLabel = createRoleLabel(agent.name);
     this.roleLabel.x = 8; // center of 16px character
     this.roleLabel.y = -12;
     this.container.addChild(this.roleLabel);
@@ -99,14 +98,12 @@ export class AgentCharacter {
 
   /** Whether the task bubble is currently visible */
   hasVisibleBubble(): boolean {
-    return this.taskBubble !== null;
+    return false;
   }
 
   /** Offset the task bubble Y position (for de-overlap) */
-  setBubbleYOffset(offset: number) {
-    if (this.taskBubble) {
-      this.taskBubble.y = -24 + offset;
-    }
+  setBubbleYOffset(_offset: number) {
+    // No-op: bubbles removed from map
   }
 
   setStatus(status: AgentStatus, currentTask: string | null) {
@@ -172,31 +169,14 @@ export class AgentCharacter {
 
   private setTaskText(task: string | null) {
     this.currentTaskText = task;
-    this.clearTaskText();
-    if (task) {
-      this.taskBubble = createTaskBubble(task);
-      this.taskBubble.x = 8;
-      this.taskBubble.y = -24;
-      this.container.addChild(this.taskBubble);
-    }
   }
 
   private clearTaskText() {
-    if (this.taskBubble) {
-      this.container.removeChild(this.taskBubble);
-      this.taskBubble.destroy();
-      this.taskBubble = null;
-    }
+    this.currentTaskText = null;
   }
 
-  /** Re-show the cached task bubble (after returning from wander) */
   private restoreTaskBubble() {
-    if (this.currentTaskText && !this.taskBubble) {
-      this.taskBubble = createTaskBubble(this.currentTaskText);
-      this.taskBubble.x = 8;
-      this.taskBubble.y = -24;
-      this.container.addChild(this.taskBubble);
-    }
+    // No-op: task info shown in right panel only
   }
 
   private showFrame(key: FrameKey) {
@@ -443,7 +423,6 @@ export class AgentCharacter {
   }
 
   destroy() {
-    this.clearTaskText();
     if (this.zzzText) {
       this.zzzText.destroy();
     }
