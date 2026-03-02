@@ -97,47 +97,53 @@ export function StatusPanel() {
             <div style={groupCardsStyle}>
               {group.key === "resting"
                 ? group.agents.map((agent) => (
-                    <div
-                      key={agent.id}
-                      style={compactCardStyle}
-                      onClick={() => scrollToAgent?.(agent.id)}
-                    >
-                      <StatusDot status={agent.status} />
-                      <span style={compactNameStyle}>{agent.name}</span>
-                      <span style={compactRoleStyle}>{agent.role_label_zh}</span>
-                    </div>
-                  ))
+                  <div
+                    key={agent.id}
+                    style={compactCardStyle}
+                    onClick={() => scrollToAgent?.(agent.id)}
+                  >
+                    <StatusDot status={agent.status} />
+                    <span style={compactNameStyle}>{agent.name}</span>
+                    <span style={compactRoleStyle}>{agent.role_label_zh}</span>
+                  </div>
+                ))
                 : group.agents.map((agent) => (
-                    <div
-                      key={agent.id}
-                      style={agentCardStyle}
-                      onClick={() => scrollToAgent?.(agent.id)}
-                    >
-                      <div style={agentHeaderStyle}>
-                        <StatusDot status={agent.status} />
-                        <span style={agentNameStyle}>{agent.name}</span>
-                      </div>
-                      <div style={roleTextStyle}>{agent.role_label_zh}</div>
-                      {agent.current_task && (
-                        <div style={taskTextStyle}>{agent.current_task}</div>
-                      )}
-                      {agent.progress != null && agent.progress > 0 && (
-                        <div style={progressRowStyle}>
-                          <div style={progressBarBgStyle}>
-                            <div
-                              style={{
-                                ...progressBarFillStyle,
-                                width: `${agent.progress * 100}%`,
-                              }}
-                            />
-                          </div>
-                          <span style={progressTextStyle}>
-                            {Math.round(agent.progress * 100)}%
-                          </span>
-                        </div>
-                      )}
+                  <div
+                    key={agent.id}
+                    style={agentCardStyle}
+                    onClick={() => scrollToAgent?.(agent.id)}
+                  >
+                    <div style={agentHeaderStyle}>
+                      <StatusDot status={agent.status} />
+                      <span style={agentNameStyle}>{agent.name}</span>
                     </div>
-                  ))}
+                    <div style={roleTextStyle}>{agent.role_label_zh}</div>
+                    <div style={taskTextStyle}>
+                      {agent.current_task || " "}
+                    </div>
+                    <div
+                      style={{
+                        ...progressRowStyle,
+                        visibility:
+                          agent.progress != null && agent.progress > 0
+                            ? "visible"
+                            : "hidden",
+                      }}
+                    >
+                      <div style={progressBarBgStyle}>
+                        <div
+                          style={{
+                            ...progressBarFillStyle,
+                            width: `${(agent.progress || 0) * 100}%`,
+                          }}
+                        />
+                      </div>
+                      <span style={progressTextStyle}>
+                        {Math.round((agent.progress || 0) * 100)}%
+                      </span>
+                    </div>
+                  </div>
+                ))}
             </div>
           </div>
         ))}
@@ -270,6 +276,9 @@ const agentCardStyle: React.CSSProperties = {
   gap: 2,
   cursor: "pointer",
   transition: "background 0.15s",
+  height: 114,
+  boxSizing: "border-box",
+  overflow: "hidden",
 };
 
 const agentHeaderStyle: React.CSSProperties = {
@@ -299,6 +308,8 @@ const taskTextStyle: React.CSSProperties = {
   WebkitLineClamp: 2,
   WebkitBoxOrient: "vertical",
   overflow: "hidden",
+  height: 34,
+  marginTop: 2,
 };
 
 const progressRowStyle: React.CSSProperties = {
@@ -306,7 +317,8 @@ const progressRowStyle: React.CSSProperties = {
   alignItems: "center",
   gap: 6,
   paddingLeft: 16,
-  marginTop: 2,
+  marginTop: "auto",
+  height: 14,
 };
 
 const progressBarBgStyle: React.CSSProperties = {
@@ -344,6 +356,8 @@ const compactCardStyle: React.CSSProperties = {
   border: "1px solid rgba(0,0,0,0.04)",
   cursor: "pointer",
   transition: "background 0.15s",
+  height: 44,
+  boxSizing: "border-box",
 };
 
 const compactNameStyle: React.CSSProperties = {
